@@ -21,7 +21,7 @@ class MainViewModel : ViewModel() {
 
     fun addScene() {
         val id = (_scenes.value.maxOfOrNull { it.id } ?: 0) + 1
-        _scenes.value += Scene(id, "New scene")
+        _scenes.value = _scenes.value + Scene(id, "New scene")
     }
 
     fun updateText(id: Int, value: String) = update(id) { it.copy(text = value) }
