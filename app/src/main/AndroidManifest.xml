@@ -1,21 +1,70 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+package com.gladstar.texttovideo
 
-    <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="TextToVideo"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.Material3.DayNight">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
+import android.content.Context
+import android.os.Environment
+import android.util.Log
+import com.arthenica.ffmpegkit.FFmpegKit
+import com.arthenica.ffmpegkit.ReturnCode
+import java.io.File
 
-</manifest>
+class VideoExportManager(private val context: Context) {
+
+    fun exportVideo(scenes: List<Scene>, outputFile: File, onComplete: (Boolean) -> Unit = {}) {
+        if (scenes.isEmpty()) {
+            onComplete(false)
+            return
+        }
+
+        val safeScenes = scenes.filter { it.text.isNotBlank() }
+        if (safeScenes.isEmpty()) {
+            onComplete(false)
+            return
+        }
+
+        val totalDuration = safeScenes.sumOf { it.durationSeconds }
+        val color = "#1D1D1F"
+        val filters = mutableListOf<String>()
+
+        var cursor = 0.0
+        safeScenes.forEachIndexed { index, scene ->
+            val safeText = scene.text
+                .replace("\\", "\\\\")
+                .replace("'", "\\'")
+                .replace(":", "\\:")
+
+            val start = cursor
+            val end = cursor + scene.durationSeconds
+            val yPos = "(h-text_h)/2"
+            val xPos = "(w-text_w)/2"
+
+            filters.add(
+                "drawtext=fontfile=/system/fonts/Roboto-Regular.ttf:text='$safeText':fontsize=64:fontcolor=white:x=$xPos:y=$yPos:box=1:boxcolor=black@0.35:boxborderw=20:enable='between(t,$start,$end)'"
+            )
+            cursor = end.toDouble()
+        }
+
+        val command = listOf(
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=${color}:s=1280x720:d=${totalDuration}",
+            "-vf",
+            filters.joinToString(","),
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            outputFile.absolutePath
+        )
+
+        Log.d("VideoExportManager", "FFmpeg command: ${command.joinToString(" ")}")
+
+        FFmpegKit.executeAsync(command.toTypedArray()) { session ->
+            val returnCode = session.returnCode
+            val success = ReturnCode.isSuccess(returnCode)
+            Log.d("VideoExportManager", "FFmpeg session finished with success=${success}, rc=${returnCode}")
+            onComplete(success)
+        }
+    }
+}

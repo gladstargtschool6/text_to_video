@@ -1,41 +1,21 @@
-package com.gladstar.texttovideo
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+    <application
+        android:allowBackup="true"
+        android:icon="@android:drawable/sym_def_app_icon"
+        android:label="TextToVideo"
+        android:roundIcon="@android:drawable/sym_def_app_icon"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Material3.DayNight">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
 
-class MainViewModel : ViewModel() {
-    private val _scenes = MutableStateFlow(
-        listOf(
-            Scene(id = 1, text = "Your first title", durationSeconds = 3),
-            Scene(id = 2, text = "Your second subtitle", durationSeconds = 4)
-        )
-    )
-
-    val scenes: StateFlow<List<Scene>> = _scenes
-
-    fun addScene() {
-        val nextId = (_scenes.value.maxOfOrNull { it.id } ?: 0) + 1
-        _scenes.value = _scenes.value + Scene(id = nextId, text = "New scene", durationSeconds = 3)
-    }
-
-    fun updateText(id: Int, text: String) {
-        _scenes.value = _scenes.value.map { scene ->
-            if (scene.id == id) scene.copy(text = text) else scene
-        }
-    }
-
-    fun updateDuration(id: Int, duration: Int) {
-        _scenes.value = _scenes.value.map { scene ->
-            if (scene.id == id) scene.copy(durationSeconds = duration.coerceAtLeast(1)) else scene
-        }
-    }
-
-    fun preview() {
-        // Placeholder for preview logic.
-    }
-
-    fun exportVideo() {
-        // Placeholder for MP4 export logic.
-    }
-}
+</manifest>
