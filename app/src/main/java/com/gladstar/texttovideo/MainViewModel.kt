@@ -5,92 +5,36 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class MainViewModel : ViewModel() {
-
     private val _scenes = MutableStateFlow(
         listOf(
-            Scene(
-                id = 1,
-                text = "Your first title",
-                durationSeconds = 3,
-                backgroundColor = 0xFF161B22,
-                textColor = 0xFFFFFFFF,
-                transitionType = TransitionType.FADE,
-                textSize = 72
-            ),
-            Scene(
-                id = 2,
-                text = "Your second subtitle",
-                durationSeconds = 4,
-                backgroundColor = 0xFF1F2937,
-                textColor = 0xFF8BE9FD,
-                transitionType = TransitionType.SLIDE,
-                textSize = 60
-            )
+            Scene(1, "Your first title", 3, 0xFFFFFFFF, 0xFF161B22, TransitionType.FADE, 72),
+            Scene(2, "Your second subtitle", 4, 0xFF8BE9FD, 0xFF1F2937, TransitionType.SLIDE, 60)
         )
     )
-
     val scenes: StateFlow<List<Scene>> = _scenes
-    val showPreview = MutableStateFlow(false)
-    val selectedMusicPath = MutableStateFlow<String?>(null)
+
+    private val _showPreview = MutableStateFlow(false)
+    val showPreview: StateFlow<Boolean> = _showPreview
+
+    private val _selectedMusicPath = MutableStateFlow<String?>(null)
+    val selectedMusicPath: StateFlow<String?> = _selectedMusicPath
 
     fun addScene() {
-        val nextId = (_scenes.value.maxOfOrNull { it.id } ?: 0) + 1
-        _scenes.value = _scenes.value + Scene(
-            id = nextId,
-            text = "New scene",
-            durationSeconds = 3,
-            backgroundColor = 0xFF1E293B,
-            textColor = 0xFFFFFFFF,
-            transitionType = TransitionType.ZOOM,
-            textSize = 64
-        )
+        val id = (_scenes.value.maxOfOrNull { it.id } ?: 0) + 1
+        _scenes.value += Scene(id, "New scene")
     }
 
-    fun updateText(id: Int, text: String) {
-        _scenes.value = _scenes.value.map { scene ->
-            if (scene.id == id) scene.copy(text = text) else scene
-        }
-    }
+    fun updateText(id: Int, value: String) = update(id) { it.copy(text = value) }
+    fun updateDuration(id: Int, value: Int) = update(id) { it.copy(durationSeconds = value.coerceIn(1, 60)) }
+    fun updateTransition(id: Int, value: TransitionType) = update(id) { it.copy(transitionType = value) }
+    fun updateTextColor(id: Int, value: Long) = update(id) { it.copy(textColor = value) }
+    fun updateBackgroundColor(id: Int, value: Long) = update(id) { it.copy(backgroundColor = value) }
+    fun updateTextSize(id: Int, value: Int) = update(id) { it.copy(textSize = value.coerceIn(24, 120)) }
+    fun removeScene(id: Int) { _scenes.value = _scenes.value.filterNot { it.id == id } }
+    fun togglePreview() { _showPreview.value = !_showPreview.value }
+    fun setMusicPath(path: String?) { _selectedMusicPath.value = path }
 
-    fun updateDuration(id: Int, duration: Int) {
-        _scenes.value = _scenes.value.map { scene ->
-            if (scene.id == id) scene.copy(durationSeconds = duration.coerceAtLeast(1)) else scene
-        }
-    }
-
-    fun updateTransition(id: Int, transition: TransitionType) {
-        _scenes.value = _scenes.value.map { scene ->
-            if (scene.id == id) scene.copy(transitionType = transition) else scene
-        }
-    }
-
-    fun updateTextColor(id: Int, color: Long) {
-        _scenes.value = _scenes.value.map { scene ->
-            if (scene.id == id) scene.copy(textColor = color) else scene
-        }
-    }
-
-    fun updateBackgroundColor(id: Int, color: Long) {
-        _scenes.value = _scenes.value.map { scene ->
-            if (scene.id == id) scene.copy(backgroundColor = color) else scene
-        }
-    }
-
-    fun updateTextSize(id: Int, size: Int) {
-        _scenes.value = _scenes.value.map { scene ->
-            if (scene.id == id) scene.copy(textSize = size.coerceIn(24, 120)) else scene
-        }
-    }
-
-    fun removeScene(id: Int) {
-        _scenes.value = _scenes.value.filter { it.id != id }
-    }
-
-    fun setMusicPath(path: String?) {
-        selectedMusicPath.value = path
-    }
-
-    fun togglePreview() {
-        showPreview.value = !showPreview.value
+    private fun update(id: Int, transform: (Scene) -> Scene) {
+        _scenes.value = _scenes.value.map { if (it.id == id) transform(it) else it }
     }
 }

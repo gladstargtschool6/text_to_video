@@ -1,9 +1,30 @@
-package com.gladstar.texttovideo
+package com.gladstar.texttovideo.ui.theme
 
-data class Scene(
-    val id: Int,
-    val text: String,
-    val durationSeconds: Int = 3,
-    val textColor: Long = 0xFFFFFFFF,
-    val backgroundColor: Long = 0xFF1F1F1F
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+
+private val DarkColors = darkColorScheme(
+    primary = Purple80,
+    secondary = PurpleGrey80,
+    tertiary = Pink80
 )
+
+private val LightColors = lightColorScheme(
+    primary = Purple40,
+    secondary = PurpleGrey40,
+    tertiary = Pink40
+)
+
+@Composable
+fun TextToVideoTheme(
+    darkTheme: Boolean = true,
+    content: @Composable () -> Unit
+) {
+    MaterialTheme(
+        colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = Typography,
+        content = content
+    )
+}
