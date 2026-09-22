@@ -40,9 +40,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.gladstar.texttovideo.ui.theme.TextToVideoTheme
 import java.io.File
 import java.io.FileOutputStream
@@ -50,15 +50,17 @@ import java.io.InputStream
 
 class MainActivity : ComponentActivity() {
 
+    private lateinit var viewModel: MainViewModel
+
     private val pickMusicLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { copyUriToCacheFile(it) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel = MainViewModel()
 
         setContent {
-            val viewModel = remember { MainViewModel() }
             val scenes by viewModel.scenes.collectAsState()
             val showPreview by viewModel.showPreview.collectAsState()
             val selectedMusicPath by viewModel.selectedMusicPath.collectAsState()
@@ -197,11 +199,7 @@ class MainActivity : ComponentActivity() {
                 inputStream.copyTo(output)
             }
 
-            val path = targetFile.absolutePath
-            val vm = MainViewModel()
-            vm.setMusicPath(path)
-            // The view model instance above is not connected; use a shared reference via a field instead.
-            // This copy operation is intentionally kept lightweight and connected by reassignment via a ViewModelProvider in app code.
+            viewModel.setMusicPath(targetFile.absolutePath)
             Toast.makeText(this, "Music selected", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Log.e("MainActivity", "Failed to copy music file", e)
@@ -226,7 +224,7 @@ private fun ScenePreviewCard(scene: Scene) {
             Text(
                 text = scene.text,
                 color = Color(scene.textColor.toInt() or 0xFF000000.toInt()),
-                fontSize = androidx.compose.ui.unit.TextUnit.Unspecified,
+                fontSize = (scene.textSize).sp,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -319,15 +317,9 @@ private fun SceneEditorCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                ColorPicker(label = "Text", color = scene.textColor, onClick = {
-                    onTextColorChange(0xFFFFFFFF)
-                })
-                ColorPicker(label = "Accent", color = scene.textColor, onClick = {
-                    onTextColorChange(0xFF8BE9FD)
-                })
-                ColorPicker(label = "Bg", color = scene.backgroundColor, onClick = {
-                    onBackgroundColorChange(0xFF1F2937)
-                })
+                ColorPicker(label = "Text", color = scene.textColor, onClick = { onTextColorChange(0xFFFFFFFF) })
+                ColorPicker(label = "Accent", color = scene.textColor, onClick = { onTextColorChange(0xFF8BE9FD) })
+                ColorPicker(label = "Bg", color = scene.backgroundColor, onClick = { onBackgroundColorChange(0xFF1F2937) })
             }
         }
     }
